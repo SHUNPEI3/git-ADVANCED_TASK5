@@ -5,44 +5,34 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_many :books, dependent: :destroy
-  has_many :bool_comments, dependent: :destroy
+  has_many :book_comments, dependent: :destroy
   has_many :favorites, dependent: :destroy
-
-
-  has_many :follower, class_name:"Relationship", foreign_key:"follower_id", dependent: :destroy
-  has_many :following_user, through: :follower, source: :followed
-
-  has_many :followed, class_name:"Relationship", foreign_key:"followed_id", dependent: :destroy
-  has_many :followed_user, through: :followed, source: :follower
-
+  has_many :follower, class_name:"Relationship",foreign_key:"follower_id", dependent: :destroy
+    has_many :follower_user, through: :follower, source: :followed
+  has_many :followed, class_name:"Relationship",foreign_key:"followed_id", dependent: :destroy
+    has_many :followed_user, through: :followed, source: :follower
 
   has_one_attached :profile_image
-
   validates :name, length: { minimum: 2, maximum: 20 }, uniqueness: true
-  validates :introduction, length: { maximum: 50 }
-
+  validates :introduction, length: {maximum: 50}
 
   def get_profile_image
-    unless profile_image.attached?
-      file_path = Rails.root.join('app/assets/images/no_image.jpg')
-      profile_image.attach(io: File.open(file_path), filename: 'default-image.jpg', content_type: 'image/jpeg')
-    end
-    profile_image.variant(resize_to_limit: [100, 100]).processed
+    (profile_image.attached?) ? profile_image : 'no_image.jpg'
   end
 
-  def following?(user)
-    following_user.include?(user)
+  def follower_by?(user)
+    follower_user.include?(user)
   end
 
   def self.search_for(content,method)
     if method == "perfect"
       User.where(name: content)
-    elsif method == "forward"
-      User.where("name LIKE ?", content + '%')
-    elsif method == "backward"
-      User.where("name LIKE ?", '%' + content)
-    else
-      User.where('name LIKE ?', '%' + content + '%')
+    elsif method == "forword"
+      User.where("name LIKE ?", content+"%")
+    elsif method == "backword"
+      User.where("name LIKE ?", "%"+content)
+    elsif method == "partical"
+      User.where("name LIKE ?", "%"+content+"%")
     end
   end
 end
